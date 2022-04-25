@@ -1,22 +1,9 @@
 from typing import List
 
-from sqlalchemy import (
-    TIMESTAMP,
-    Date,
-    Enum,
-    Float,
-    Index,
-    Table,
-    Column,
-    String,
-    and_,
-    text,
-)
+from sqlalchemy import Date, Enum, Float, Index, Table, Column, String, and_, text
 from sqlalchemy.orm import foreign, relationship, declarative_base
 from sqlalchemy.dialects.mysql import (
-    CHAR,
     ENUM,
-    TEXT,
     YEAR,
     INTEGER,
     TINYINT,
@@ -115,20 +102,6 @@ class ChiiCrtSubjectIndex(Base):
     )  # type: ignore
 
 
-class ChiiEpRevision(Base):
-    __tablename__ = "chii_ep_revisions"
-    __table_args__ = (Index("rev_sid", "rev_sid", "rev_creator"),)
-
-    ep_rev_id = Column(MEDIUMINT(8), primary_key=True)
-    rev_sid = Column(MEDIUMINT(8), nullable=False)
-    rev_eids = Column(String(255), nullable=False)
-    rev_ep_infobox = Column(MEDIUMTEXT, nullable=False)
-    rev_creator = Column(MEDIUMINT(8), nullable=False)
-    rev_version = Column(TINYINT(1), nullable=False, server_default=text("'0'"))
-    rev_dateline = Column(INTEGER(10), nullable=False)
-    rev_edit_summary = Column(String(200), nullable=False)
-
-
 class ChiiEpisode(Base):
     __tablename__ = "chii_episodes"
     __table_args__ = (Index("ep_subject_id_2", "ep_subject_id", "ep_ban", "ep_sort"),)
@@ -171,61 +144,6 @@ class ChiiEpisode(Base):
         back_populates="episodes",
         uselist=False,
     )  # type: ignore
-
-
-class ChiiMemberfield(Base):
-    __tablename__ = "chii_memberfields"
-
-    uid = Column(MEDIUMINT(8), primary_key=True, server_default=text("'0'"))
-    site = Column(VARCHAR(75), nullable=False, server_default=text("''"))
-    location = Column(VARCHAR(30), nullable=False, server_default=text("''"))
-    bio = Column(TEXT, nullable=False)
-    privacy = Column(MEDIUMTEXT, nullable=False)
-    blocklist = Column(MEDIUMTEXT, nullable=False)
-
-
-class ChiiMember(Base):
-    __tablename__ = "chii_members"
-
-    uid: int = Column(MEDIUMINT(8), primary_key=True)
-    username = Column(CHAR(15), nullable=False, unique=True, server_default=text("''"))
-    nickname = Column(String(30), nullable=False)
-    avatar: str = Column(VARCHAR(255), nullable=False)
-    groupid = Column(SMALLINT(6), nullable=False, server_default=text("'0'"))
-    regdate = Column(INTEGER(10), nullable=False, server_default=text("'0'"))
-    lastvisit = Column(INTEGER(10), nullable=False, server_default=text("'0'"))
-    lastactivity = Column(INTEGER(10), nullable=False, server_default=text("'0'"))
-    lastpost = Column(INTEGER(10), nullable=False, server_default=text("'0'"))
-    dateformat = Column(CHAR(10), nullable=False, server_default=text("''"))
-    timeformat = Column(TINYINT(1), nullable=False, server_default=text("'0'"))
-    timeoffset = Column(CHAR(4), nullable=False, server_default=text("''"))
-    newpm = Column(TINYINT(1), nullable=False, server_default=text("'0'"))
-    new_notify = Column(
-        SMALLINT(6), nullable=False, server_default=text("'0'"), comment="新提醒"
-    )
-    sign = Column(VARCHAR(255), nullable=False)
-
-    subjects: List["ChiiSubjectInterest"] = relationship(
-        "ChiiSubjectInterest",
-        lazy="raise_on_sql",
-        primaryjoin=lambda: ChiiMember.uid == foreign(ChiiSubjectInterest.user_id),
-        uselist=True,
-        back_populates="user",
-    )  # type: ignore
-
-
-class ChiiOauthAccessToken(Base):
-    __tablename__ = "chii_oauth_access_tokens"
-
-    access_token = Column(String(40, "utf8_unicode_ci"), primary_key=True)
-    client_id = Column(String(80, "utf8_unicode_ci"), nullable=False)
-    user_id: str = Column(String(80, "utf8_unicode_ci"))
-    expires = Column(
-        TIMESTAMP,
-        nullable=False,
-        server_default=text("CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP"),
-    )
-    scope = Column(String(4000, "utf8_unicode_ci"))
 
 
 t_chii_person_alias = Table(
@@ -374,22 +292,6 @@ class ChiiPerson(Base):
         lazy="raise_on_sql",
         back_populates="person",
     )
-
-
-class ChiiRevHistory(Base):
-    __tablename__ = "chii_rev_history"
-    __table_args__ = (
-        Index("rev_crt_id", "rev_type", "rev_mid"),
-        Index("rev_id", "rev_id", "rev_type", "rev_creator"),
-    )
-
-    rev_id = Column(MEDIUMINT(8), primary_key=True)
-    rev_type = Column(TINYINT(3), nullable=False, comment="条目，角色，人物")
-    rev_mid = Column(MEDIUMINT(8), nullable=False, comment="对应条目，人物的ID")
-    rev_text_id = Column(MEDIUMINT(9), nullable=False)
-    rev_dateline = Column(INTEGER(10), nullable=False)
-    rev_creator = Column(MEDIUMINT(8), nullable=False, index=True)
-    rev_edit_summary = Column(String(200, "utf8_unicode_ci"), nullable=False)
 
 
 class ChiiSubjectField(Base):
@@ -785,14 +687,6 @@ class ChiiSubjectInterest(Base):
     private = Column(
         "interest_private", TINYINT(1), nullable=False, index=True, default=0
     )
-
-    user: "ChiiMember" = relationship(
-        "ChiiMember",
-        lazy="raise_on_sql",
-        primaryjoin=lambda: ChiiMember.uid == foreign(ChiiSubjectInterest.user_id),
-        uselist=False,
-        back_populates="subjects",
-    )  # type: ignore
 
     subject: "ChiiSubject" = relationship(
         "ChiiSubject",
