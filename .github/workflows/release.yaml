@@ -25,5 +25,6 @@ jobs:
 
       - run: |
           docker push ghcr.io/bangumi/api-server:latest
+          docker tag ghcr.io/bangumi/api-server:latest "ghcr.io/bangumi/api-server:python-$SHA"
           docker push "ghcr.io/bangumi/api-server:python-$SHA"
         name: Docker Push

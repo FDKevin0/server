@@ -12,7 +12,7 @@ from sqlalchemy import (
     and_,
     text,
 )
-from sqlalchemy.orm import remote, foreign, relationship, declarative_base
+from sqlalchemy.orm import foreign, relationship, declarative_base
 from sqlalchemy.dialects.mysql import (
     CHAR,
     ENUM,
@@ -392,29 +392,6 @@ class ChiiRevHistory(Base):
     rev_edit_summary = Column(String(200, "utf8_unicode_ci"), nullable=False)
 
 
-t_chii_subject_alias = Table(
-    "chii_subject_alias",
-    metadata,
-    Column("subject_id", INTEGER(10), nullable=False, index=True),
-    Column("alias_name", String(255), nullable=False),
-    Column(
-        "subject_type_id",
-        TINYINT(3),
-        nullable=False,
-        server_default=text("'0'"),
-        comment="所属条目的类型",
-    ),
-    Column(
-        "alias_type",
-        TINYINT(3),
-        nullable=False,
-        server_default=text("'0'"),
-        comment="是别名还是条目名",
-    ),
-    Column("alias_key", VARCHAR(10), nullable=False),
-)
-
-
 class ChiiSubjectField(Base):
     __tablename__ = "chii_subject_fields"
     __table_args__ = (
@@ -459,52 +436,6 @@ class ChiiSubjectField(Base):
         uselist=False,
         back_populates="fields",
     )  # type: ignore
-
-    def rating(self):
-        scores = self.scores()
-        total = 0
-        total_count = 0
-        for key, value in scores.items():
-            total += int(key) * value
-            total_count += value
-        if total_count != 0:
-            score = round(total / total_count, 1)
-        else:
-            score = 0
-
-        return {
-            "rank": self.field_rank,
-            "score": score,
-            "count": scores,
-            "total": total_count,
-        }
-
-    def scores(self):
-        return {
-            "1": self.field_rate_1,
-            "2": self.field_rate_2,
-            "3": self.field_rate_3,
-            "4": self.field_rate_4,
-            "5": self.field_rate_5,
-            "6": self.field_rate_6,
-            "7": self.field_rate_7,
-            "8": self.field_rate_8,
-            "9": self.field_rate_9,
-            "10": self.field_rate_10,
-        }
-
-    def tags(self) -> List[dict]:
-        if not self.field_tags:
-            return []
-
-        # defaults to utf-8
-        tags_deserialized = dict_to_list(phpseralize.loads(self.field_tags.encode()))
-
-        return [
-            {"name": tag["tag_name"], "count": tag["result"]}
-            for tag in tags_deserialized
-            if tag["tag_name"] is not None  # remove tags like { "tag_name": None }
-        ]
 
 
 class ChiiSubjectRelations(Base):
@@ -581,37 +512,6 @@ class ChiiSubjectRelations(Base):
         uselist=False,
         back_populates="related",
     )  # type: ignore
-
-
-class ChiiSubjectRevision(Base):
-    __tablename__ = "chii_subject_revisions"
-    __table_args__ = (
-        Index("rev_subject_id", "rev_subject_id", "rev_creator"),
-        Index("rev_creator", "rev_creator", "rev_id"),
-    )
-
-    rev_id = Column(MEDIUMINT(8), primary_key=True)
-    rev_type = Column(
-        TINYINT(3),
-        nullable=False,
-        index=True,
-        server_default=text("'1'"),
-        comment="修订类型",
-    )
-    rev_subject_id = Column(MEDIUMINT(8), nullable=False)
-    rev_type_id = Column(SMALLINT(6), nullable=False, server_default=text("'0'"))
-    rev_creator = Column(MEDIUMINT(8), nullable=False)
-    rev_dateline = Column(
-        INTEGER(10), nullable=False, index=True, server_default=text("'0'")
-    )
-    rev_name = Column(String(80), nullable=False)
-    rev_name_cn = Column(String(80), nullable=False)
-    rev_field_infobox = Column(MEDIUMTEXT, nullable=False)
-    rev_field_summary = Column(MEDIUMTEXT, nullable=False)
-    rev_vote_field = Column(MEDIUMTEXT, nullable=False)
-    rev_field_eps = Column(MEDIUMINT(8), nullable=False)
-    rev_edit_summary = Column(String(200), nullable=False)
-    rev_platform = Column(SMALLINT(6), nullable=False)
 
 
 class ChiiSubject(Base):
@@ -759,74 +659,6 @@ class ChiiSubject(Base):
     def ban(self) -> bool:
         return self.subject_ban == 1
 
-    @classmethod
-    def with_default_value(
-        cls,
-        subject_id=1,
-        subject_type_id=1,
-        subject_platform=0,
-        subject_image="",
-        field_infobox="",
-        field_summary="",
-        subject_name="name",
-        subject_name_cn="name_cn",
-        subject_ban=0,
-        subject_nsfw=0,
-        field_volumes=0,
-        field_eps=0,
-        subject_wish=0,
-        subject_collect=0,
-        subject_doing=0,
-        subject_on_hold=0,
-        subject_dropped=0,
-        field_redirect=0,
-        field_rate_1=0,
-        field_rate_2=0,
-        field_rate_3=0,
-        field_rate_4=0,
-        field_rate_5=0,
-        field_rate_6=0,
-        field_rate_7=0,
-        field_rate_8=0,
-        field_rate_9=0,
-        field_rate_10=0,
-        field_rank=0,
-    ):
-        """a method to get a instance with all field has a default value"""
-        return ChiiSubject(
-            subject_id=subject_id,
-            subject_type_id=subject_type_id,
-            subject_platform=subject_platform,
-            subject_image=subject_image,
-            field_infobox=field_infobox,
-            field_summary=field_summary,
-            subject_name=subject_name,
-            subject_name_cn=subject_name_cn,
-            subject_ban=subject_ban,
-            subject_nsfw=subject_nsfw,
-            field_volumes=field_volumes,
-            field_eps=field_eps,
-            subject_wish=subject_wish,
-            subject_collect=subject_collect,
-            subject_doing=subject_doing,
-            subject_on_hold=subject_on_hold,
-            subject_dropped=subject_dropped,
-            fields=ChiiSubjectField(
-                field_redirect=field_redirect,
-                field_rate_1=field_rate_1,
-                field_rate_2=field_rate_2,
-                field_rate_3=field_rate_3,
-                field_rate_4=field_rate_4,
-                field_rate_5=field_rate_5,
-                field_rate_6=field_rate_6,
-                field_rate_7=field_rate_7,
-                field_rate_8=field_rate_8,
-                field_rate_9=field_rate_9,
-                field_rate_10=field_rate_10,
-                field_rank=field_rank,
-            ),
-        )
-
 
 class ChiiSubjectInterest(Base):
     __tablename__ = "chii_subject_interests"
@@ -971,88 +803,3 @@ class ChiiSubjectInterest(Base):
         uselist=False,
         back_populates="users",
     )  # type: ignore
-
-
-class ChiiIndex(Base):
-    __tablename__ = "chii_index"
-    __table_args__ = (
-        Index("mid", "idx_id"),
-        Index("idx_ban", "idx_ban"),
-        Index("idx_type", "idx_type"),
-        Index("idx_uid", "idx_uid"),
-        Index("idx_collects", "idx_collects"),
-    )
-    idx_id = Column(MEDIUMINT(8), comment="自动id", primary_key=True, autoincrement=True)
-    idx_type = Column(TINYINT(3), nullable=False, server_default=text("'0'"))
-    idx_title = Column(VARCHAR(80), nullable=False, comment="标题")
-    idx_desc = Column(MEDIUMTEXT, nullable=False, comment="简介")
-    idx_replies = Column(
-        MEDIUMINT(8), nullable=False, server_default="'0'", comment="回复数"
-    )
-    idx_subject_total = Column(
-        MEDIUMINT(8), nullable=False, server_default="'0'", comment="内含条目总数"
-    )
-    idx_collects = Column(
-        MEDIUMINT(8), nullable=False, server_default="'0'", comment="收藏数"
-    )
-    idx_stats = Column(MEDIUMTEXT, nullable=False)
-    idx_dateline = Column(INTEGER(10), nullable=False, comment="创建时间")
-    idx_lasttouch = Column(INTEGER(10), nullable=False)
-    idx_uid = Column(MEDIUMINT(8), nullable=False, comment="创建人UID")
-    idx_ban = Column(TINYINT(1), nullable=False, server_default="'0'")
-
-
-class ChiiIndexCollects(Base):
-    __tablename__ = "chii_index_collects"
-    __table_args__ = (
-        Index("idx_clt_mid", "idx_clt_mid", "idx_clt_uid"),
-        {"comment": "目录收藏"},
-    )
-    idx_clt_id = Column(MEDIUMINT(8), primary_key=True, autoincrement=True)
-    idx_clt_mid = Column(MEDIUMINT(8), nullable=False, comment="目录ID")
-    idx_clt_uid = Column(MEDIUMINT(8), nullable=False, comment="用户UID")
-    idx_clt_dateline = Column(INTEGER(10), nullable=False)
-
-
-class ChiiIndexComments(Base):
-    __tablename__ = "chii_index_comments"
-    __table_args__ = (
-        Index("idx_pst_mid", "idx_pst_mid"),
-        Index("idx_pst_related", "idx_pst_related"),
-        Index("idx_pst_uid", "idx_pst_uid"),
-    )
-    idx_pst_id = Column(MEDIUMINT(8), primary_key=True, autoincrement=True)
-    idx_pst_mid = Column(MEDIUMINT(8), nullable=False)
-    idx_pst_uid = Column(MEDIUMINT(8), nullable=False)
-    idx_pst_related = Column(MEDIUMINT(8), nullable=False, server_default=text("'0'"))
-    idx_pst_dateline = Column(INTEGER(10), nullable=False)
-    idx_pst_content = Column(MEDIUMTEXT, nullable=False)
-    replies: List["ChiiIndexComments"] = relationship(
-        "ChiiIndexComments",
-        primaryjoin=foreign(idx_pst_id) == remote(idx_pst_related),
-        order_by=idx_pst_dateline.asc(),
-        uselist=True,
-        lazy="raise_on_sql",
-    )  # type: ignore
-
-
-class ChiiIndexRelated(Base):
-    __tablename__ = "chii_index_related"
-    __table_args__ = (
-        Index("idx_rlt_rid", "idx_rlt_rid", "idx_rlt_type"),
-        Index("idx_rlt_sid", "idx_rlt_rid", "idx_rlt_sid"),
-        Index("idx_rlt_sid_2", "idx_rlt_sid"),
-        Index("index_rlt_cat", "idx_rlt_cat"),
-        Index(
-            "idx_order", "idx_rlt_rid", "idx_rlt_cat", "idx_rlt_order", "idx_rlt_sid"
-        ),
-        {"comment": "目录关联表"},
-    )
-    idx_rlt_id = Column(MEDIUMINT(8), primary_key=True, autoincrement=True)
-    idx_rlt_cat = Column(TINYINT(3), nullable=False)
-    idx_rlt_rid = Column(MEDIUMINT(8), nullable=False, comment="关联目录")
-    idx_rlt_type = Column(SMALLINT(6), nullable=False, comment="关联条目类型")
-    idx_rlt_sid = Column(MEDIUMINT(8), nullable=False, server_default=text("'0'"))
-    idx_rlt_order = Column(MEDIUMINT(8), nullable=False, server_default=text("'0'"))
-    idx_rlt_comment = Column(MEDIUMTEXT, nullable=False)
-    idx_rlt_dateline = Column(INTEGER(10), nullable=False)
