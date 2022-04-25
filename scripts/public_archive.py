@@ -233,6 +233,7 @@ def export_subjects(f: IO[bytes], session: Session):
                 orjson.dumps(
                     {
                         "id": subject.subject_id,
+                        "type": subject.subject_type_id,
                         "name": subject.subject_name,
                         "name_cn": subject.subject_name_cn,
                         "infobox": subject.field_infobox,
