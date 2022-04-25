@@ -2,8 +2,8 @@ name: release
 
 on:
   push:
-    tags:
-      - v*
+    branches:
+      - python
 
 jobs:
   release:
@@ -13,10 +13,10 @@ jobs:
       - uses: actions/checkout@v2
 
       - name: Get Tag Name
-        run: echo "TAG=${GITHUB_REF##*/}" >> $GITHUB_ENV
+        run: echo "SHA=${GITHUB_SHA::7}" >> $GITHUB_ENV
 
       - name: Build Docker Image
-        run: docker build --build-arg "COMMIT_REF=$TAG" -t ghcr.io/bangumi/api-server:latest .
+        run: docker build --build-arg "COMMIT_REF=$SHA" -t ghcr.io/bangumi/api-server:latest .
 
       - run: echo $DOCKER_TOKEN | docker login ghcr.io -u bangumi --password-stdin
         name: docker login
@@ -25,12 +25,5 @@ jobs:
 
       - run: |
           docker push ghcr.io/bangumi/api-server:latest
-          docker tag ghcr.io/bangumi/api-server:latest "ghcr.io/bangumi/api-server:$TAG"
-          docker push "ghcr.io/bangumi/api-server:$TAG"
+          docker push "ghcr.io/bangumi/api-server:python-$SHA"
         name: Docker Push
-
-      - name: Upload Github Release
-        run: gh release create "$TAG" --title "$TAG ($(date --rfc-3339=date))"
-        env:
-          TZ: "Asia/Shanghai"
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
