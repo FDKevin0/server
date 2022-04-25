@@ -32,7 +32,7 @@ jobs:
       - run: bash $HOME/dev-env/wait_mysql_ready.sh
 
       - name: test
-        run: coverage run -m pytest -vv --e2e --database --redis
+        run: coverage run scripts/public_archive.py
         env:
           MYSQL_HOST: 127.0.0.1
           MYSQL_PORT: "3306"
@@ -46,9 +46,3 @@ jobs:
       - run: coverage xml
 
       - uses: codecov/codecov-action@v2
-
-  build:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v2
-      - run: docker build -t bangumi/server .

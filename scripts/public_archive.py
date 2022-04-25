@@ -3,7 +3,7 @@ create a public archive at `--out`
 """
 import os
 import zipfile
-from typing import IO
+from typing import IO, List
 from argparse import ArgumentParser
 from functools import lru_cache
 
@@ -22,7 +22,25 @@ from pol.db.tables import (
     ChiiCrtSubjectIndex,
     ChiiSubjectRelations,
 )
-from pol.api.v0.utils import get_career
+
+
+def get_career(p: ChiiPerson) -> List[str]:
+    s = []
+    if p.prsn_producer:
+        s.append("producer")
+    if p.prsn_mangaka:
+        s.append("mangaka")
+    if p.prsn_artist:
+        s.append("artist")
+    if p.prsn_seiyu:
+        s.append("seiyu")
+    if p.prsn_writer:
+        s.append("writer")
+    if p.prsn_illustrator:
+        s.append("illustrator")
+    if p.prsn_actor:
+        s.append("actor")
+    return s
 
 
 @logger.catch()

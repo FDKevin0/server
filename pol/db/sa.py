@@ -73,7 +73,4 @@ def sync_session_maker() -> Callable[[], sqlalchemy.orm.Session]:
         pool_size=10,
         max_overflow=20,
     )
-    return sessionmaker(
-        engine,
-        expire_on_commit=False,
-    )
+    return sessionmaker(engine, expire_on_commit=False)
