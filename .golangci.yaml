@@ -3,6 +3,7 @@
 
 # options for analysis running
 run:
+  go: "1.18"
   # timeout for analysis, e.g. 30s, 5m, default is 1m
   timeout: 2m
 
@@ -165,7 +166,7 @@ linters-settings:
 
   gosimple:
     # Select the Go version to target. The default is '1.13'.
-    go: "1.17"
+    go: "1.18"
     # https://staticcheck.io/docs/options#checks
     checks: ["all"]
 
@@ -195,13 +196,13 @@ linters-settings:
 
   staticcheck:
     # Select the Go version to target. The default is '1.13'.
-    go: "1.17"
+    go: "1.18"
     # https://staticcheck.io/docs/options#checks
     checks: ["all"]
 
   stylecheck:
     # Select the Go version to target. The default is '1.13'.
-    go: "1.17"
+    go: "1.18"
 
   testpackage:
     # regexp pattern to skip files
@@ -209,7 +210,7 @@ linters-settings:
 
   unused:
     # Select the Go version to target. The default is '1.13'.
-    go: "1.17"
+    go: "1.18"
 
   exhaustive:
     # check switch statements in generated files also
@@ -286,6 +287,17 @@ linters:
     - whitespace
     - godox
     - execinquery
+    - sqlclosecheck # we don't write raw SQL
+    - rowserrcheck # we don't write ral SQL
+    # not support in go 1.18 yet:
+    - unparam
+    - wastedassign
+    - tparallel
+    - structcheck
+    - noctx
+    - nilerr
+    - contextcheck
+    - bodyclose
   fast: false
 
 issues:

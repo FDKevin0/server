@@ -5,7 +5,7 @@
 
 ## Requirements
 
-- [Go 1.17+](https://go.dev/)
+- [Go 1.18+](https://go.dev/)
 - [GNU make](https://www.gnu.org/software/make/)
 
 ## Optional Requirements:

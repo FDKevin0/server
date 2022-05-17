@@ -1,6 +1,6 @@
 module github.com/bangumi/server
 
-go 1.17
+go 1.18
 
 require (
 	github.com/elliotchance/phpserialize v1.3.3
