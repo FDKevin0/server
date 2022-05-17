@@ -144,9 +144,7 @@ func TestHandler_ListCharacterRevision_HappyPath(t *testing.T) {
 
 	t.Parallel()
 	m := mocks.NewRevisionRepo(t)
-	m.EXPECT().ListCharacterRelated(mock.Anything, cid, 30, 0).Return([]model.CharacterRevision{
-		{RevisionCommon: model.RevisionCommon{ID: mockRID}},
-	}, nil)
+	m.EXPECT().ListCharacterRelated(mock.Anything, cid, 30, 0).Return([]model.CharacterRevision{{ID: mockRID}}, nil)
 	m.EXPECT().CountCharacterRelated(mock.Anything, cid).Return(1, nil)
 
 	app := test.GetWebApp(t, test.Mock{RevisionRepo: m})
@@ -176,9 +174,7 @@ func TestHandler_GetCharacterRevision_HappyPath(t *testing.T) {
 
 	t.Parallel()
 	m := mocks.NewRevisionRepo(t)
-	m.EXPECT().GetCharacterRelated(mock.Anything, mockRID).Return(model.CharacterRevision{
-		RevisionCommon: model.RevisionCommon{ID: mockRID},
-	}, nil)
+	m.EXPECT().GetCharacterRelated(mock.Anything, mockRID).Return(model.CharacterRevision{ID: mockRID}, nil)
 
 	app := test.GetWebApp(t, test.Mock{RevisionRepo: m})
 

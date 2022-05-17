@@ -59,7 +59,7 @@ func (r mysqlRepo) CountPersonRelated(ctx context.Context, id model.PersonIDType
 
 func (r mysqlRepo) ListPersonRelated(
 	ctx context.Context, personID model.PersonIDType, limit int, offset int,
-) ([]model.Revision, error) {
+) ([]model.PersonRevision, error) {
 	revisions, err := r.q.RevisionHistory.WithContext(ctx).
 		Where(r.q.RevisionHistory.Mid.Eq(personID), r.q.RevisionHistory.Type.In(model.PersonRevisionTypes()...)).
 		Order(r.q.RevisionHistory.ID.Desc()).
@@ -69,14 +69,14 @@ func (r mysqlRepo) ListPersonRelated(
 		return nil, errgo.Wrap(err, "dal")
 	}
 
-	result := make([]model.Revision, len(revisions))
+	result := make([]model.PersonRevision, len(revisions))
 	for i, revision := range revisions {
 		result[i] = convertRevisionDao(revision, nil)
 	}
 	return result, nil
 }
 
-func (r mysqlRepo) GetPersonRelated(ctx context.Context, id model.UIDType) (model.Revision, error) {
+func (r mysqlRepo) GetPersonRelated(ctx context.Context, id model.UIDType) (model.PersonRevision, error) {
 	revision, err := r.q.RevisionHistory.WithContext(ctx).
 		Where(r.q.RevisionHistory.ID.Eq(id),
 			r.q.RevisionHistory.Type.In(model.PersonRevisionTypes()...)).
@@ -84,21 +84,21 @@ func (r mysqlRepo) GetPersonRelated(ctx context.Context, id model.UIDType) (mode
 
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
-			return model.Revision{}, domain.ErrNotFound
+			return model.PersonRevision{}, domain.ErrNotFound
 		}
 		r.log.Error("unexpected error happened", zap.Error(err))
-		return model.Revision{}, errgo.Wrap(err, "dal")
+		return model.PersonRevision{}, errgo.Wrap(err, "dal")
 	}
 	data, err := r.q.RevisionText.WithContext(ctx).
 		Where(r.q.RevisionText.TextID.Eq(revision.TextID)).First()
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			r.log.Error("can't find revision text", zap.Uint32("id", revision.TextID))
-			return model.Revision{}, domain.ErrNotFound
+			return model.PersonRevision{}, domain.ErrNotFound
 		}
 
 		r.log.Error("unexpected error happened", zap.Error(err))
-		return model.Revision{}, errgo.Wrap(err, "dal")
+		return model.PersonRevision{}, errgo.Wrap(err, "dal")
 	}
 	return convertRevisionDao(revision, data), nil
 }
@@ -174,7 +174,7 @@ func (r mysqlRepo) CountSubjectRelated(ctx context.Context, id model.SubjectIDTy
 
 func (r mysqlRepo) ListSubjectRelated(
 	ctx context.Context, id model.SubjectIDType, limit int, offset int,
-) ([]model.Revision, error) {
+) ([]model.SubjectRevision, error) {
 	revisions, err := r.q.SubjectRevision.WithContext(ctx).
 		Where(r.q.SubjectRevision.SubjectID.Eq(id)).
 		Order(r.q.SubjectRevision.ID.Desc()).
@@ -184,25 +184,25 @@ func (r mysqlRepo) ListSubjectRelated(
 		return nil, errgo.Wrap(err, "dal")
 	}
 
-	result := make([]model.Revision, len(revisions))
+	result := make([]model.SubjectRevision, len(revisions))
 	for i, revision := range revisions {
 		result[i] = convertSubjectRevisionDao(revision, false)
 	}
 	return result, nil
 }
 
-func (r mysqlRepo) GetSubjectRelated(ctx context.Context, id model.UIDType) (model.Revision, error) {
+func (r mysqlRepo) GetSubjectRelated(ctx context.Context, id model.UIDType) (model.SubjectRevision, error) {
 	revision, err := r.q.SubjectRevision.WithContext(ctx).
 		Where(r.q.SubjectRevision.ID.Eq(id)).
 		First()
 
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
-			return model.Revision{}, domain.ErrNotFound
+			return model.SubjectRevision{}, domain.ErrNotFound
 		}
 
 		r.log.Error("unexpected error happened", zap.Error(err))
-		return model.Revision{}, errgo.Wrap(err, "dal")
+		return model.SubjectRevision{}, errgo.Wrap(err, "dal")
 	}
 	return convertSubjectRevisionDao(revision, true), nil
 }
@@ -297,13 +297,13 @@ func castPersonData(raw map[string]interface{}) map[string]model.PersonRevisionD
 	return items
 }
 
-func convertRevisionDao(r *dao.RevisionHistory, data *dao.RevisionText) model.Revision {
+func convertRevisionDao(r *dao.RevisionHistory, data *dao.RevisionText) model.PersonRevision {
 	var text map[string]model.PersonRevisionDataItem
 	if data != nil {
 		text = castPersonData(convertRevisionText(data.Text))
 	}
 
-	return model.Revision{
+	return model.PersonRevision{
 		ID:        r.ID,
 		Type:      r.Type,
 		Summary:   r.Summary,
@@ -320,18 +320,16 @@ func convertCharacterRevisionDao(r *dao.RevisionHistory, text *dao.RevisionText)
 	}
 
 	return model.CharacterRevision{
-		RevisionCommon: model.RevisionCommon{
-			ID:        r.ID,
-			Type:      r.Type,
-			Summary:   r.Summary,
-			CreatorID: r.CreatorID,
-			CreatedAt: time.Unix(int64(r.CreatedAt), 0),
-		},
-		Data: data,
+		ID:        r.ID,
+		Type:      r.Type,
+		Summary:   r.Summary,
+		CreatorID: r.CreatorID,
+		CreatedAt: time.Unix(int64(r.CreatedAt), 0),
+		Data:      data,
 	}
 }
 
-func convertSubjectRevisionDao(r *dao.SubjectRevision, isDetailed bool) model.Revision {
+func convertSubjectRevisionDao(r *dao.SubjectRevision, isDetailed bool) model.SubjectRevision {
 	var data *model.SubjectRevisionData
 	if isDetailed {
 		data = &model.SubjectRevisionData{
@@ -348,7 +346,7 @@ func convertSubjectRevisionDao(r *dao.SubjectRevision, isDetailed bool) model.Re
 		}
 	}
 
-	return model.Revision{
+	return model.SubjectRevision{
 		ID:        r.ID,
 		Type:      r.Type,
 		Summary:   r.EditSummary,

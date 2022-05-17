@@ -22,7 +22,6 @@ import (
 	"fmt"
 	"strconv"
 
-	"github.com/goccy/go-reflect"
 	"github.com/gofiber/fiber/v2"
 
 	"github.com/bangumi/server/domain"
@@ -151,7 +150,7 @@ func (h Handler) listCharacterRevision(c *fiber.Ctx, characterID model.Character
 
 	creatorIDs := make([]uint32, 0, len(revisions))
 	for _, revision := range revisions {
-		creatorIDs = append(creatorIDs, revision.RevisionCommon.CreatorID)
+		creatorIDs = append(creatorIDs, revision.CreatorID)
 	}
 	creatorMap, err := h.u.GetByIDs(c.Context(), dedupeCreatorID(creatorIDs)...)
 
@@ -278,7 +277,7 @@ func dedupeCreatorID(creatorIDs []uint32) []model.UIDType {
 	return ret
 }
 
-func listUniqueCreatorID(revisions []model.Revision) []model.UIDType {
+func listUniqueCreatorID[T any](revisions []model.Revision[T]) []model.UIDType {
 	m := make(map[model.UIDType]bool, len(revisions))
 	ret := make([]model.UIDType, len(revisions))
 	i := 0
@@ -292,7 +291,7 @@ func listUniqueCreatorID(revisions []model.Revision) []model.UIDType {
 	return ret[:i]
 }
 
-func convertModelPersonRevision(r *model.Revision, creatorMap map[model.UIDType]model.User) res.PersonRevision {
+func convertModelPersonRevision(r *model.PersonRevision, creatorMap map[model.UIDType]model.User) res.PersonRevision {
 	creator := creatorMap[r.CreatorID]
 	ret := res.PersonRevision{
 		ID:      r.ID,
@@ -305,54 +304,51 @@ func convertModelPersonRevision(r *model.Revision, creatorMap map[model.UIDType]
 		CreatedAt: r.CreatedAt,
 		Data:      nil,
 	}
-	if data, ok := r.Data.(map[string]model.PersonRevisionDataItem); ok {
-		ret.Data = make(map[string]res.PersonRevisionDataItem, len(data))
-		for id, item := range data {
-			ret.Data[id] = res.PersonRevisionDataItem{
-				InfoBox: item.InfoBox,
-				Summary: item.Summary,
-				Profession: res.Profession{
-					Writer:      item.Profession.Writer,
-					Producer:    item.Profession.Producer,
-					Mangaka:     item.Profession.Mangaka,
-					Artist:      item.Profession.Artist,
-					Seiyu:       item.Profession.Seiyu,
-					Illustrator: item.Profession.Illustrator,
-					Actor:       item.Profession.Actor,
-				},
-				Extra: res.Extra{
-					Img: item.Extra.Img,
-				},
-				Name: item.Name,
-			}
+
+	data := r.Data
+	ret.Data = make(map[string]res.PersonRevisionDataItem, len(data))
+	for id, item := range data {
+		ret.Data[id] = res.PersonRevisionDataItem{
+			InfoBox: item.InfoBox,
+			Summary: item.Summary,
+			Profession: res.Profession{
+				Writer:      item.Profession.Writer,
+				Producer:    item.Profession.Producer,
+				Mangaka:     item.Profession.Mangaka,
+				Artist:      item.Profession.Artist,
+				Seiyu:       item.Profession.Seiyu,
+				Illustrator: item.Profession.Illustrator,
+				Actor:       item.Profession.Actor,
+			},
+			Extra: res.Extra{
+				Img: item.Extra.Img,
+			},
+			Name: item.Name,
 		}
 	}
+
 	return ret
 }
 
-func convertModelSubjectRevision(r *model.Revision, creatorMap map[model.UIDType]model.User) res.SubjectRevision {
+func convertModelSubjectRevision(r *model.SubjectRevision, creatorMap map[model.UIDType]model.User) res.SubjectRevision {
 	creator := creatorMap[r.CreatorID]
 	var data *res.SubjectRevisionData
-	v := reflect.ValueNoEscapeOf(r.Data)
-	if v.IsValid() && (!v.IsZero()) && (!v.IsNil()) {
-		// can't compare r.Data != nil
-		// see https://yourbasic.org/golang/gotcha-why-nil-error-not-equal-nil/ for this detail.
-		// replace it with generic type after we upgrade to go 1.18
-		if subjectData, ok := r.Data.(*model.SubjectRevisionData); ok {
-			data = &res.SubjectRevisionData{
-				Name:         subjectData.Name,
-				NameCN:       subjectData.NameCN,
-				VoteField:    subjectData.VoteField,
-				FieldInfobox: subjectData.FieldInfobox,
-				FieldSummary: subjectData.FieldSummary,
-				Platform:     subjectData.Platform,
-				TypeID:       subjectData.TypeID,
-				SubjectID:    subjectData.SubjectID,
-				FieldEps:     subjectData.FieldEps,
-				Type:         subjectData.Type,
-			}
+
+	if r.Data != nil {
+		data = &res.SubjectRevisionData{
+			Name:         r.Data.Name,
+			NameCN:       r.Data.NameCN,
+			VoteField:    r.Data.VoteField,
+			FieldInfobox: r.Data.FieldInfobox,
+			FieldSummary: r.Data.FieldSummary,
+			Platform:     r.Data.Platform,
+			TypeID:       r.Data.TypeID,
+			SubjectID:    r.Data.SubjectID,
+			FieldEps:     r.Data.FieldEps,
+			Type:         r.Data.Type,
 		}
 	}
+
 	return res.SubjectRevision{
 		ID:      r.ID,
 		Type:    r.Type,

@@ -25,8 +25,12 @@ type Creator struct {
 	Nickname string
 }
 
-type Revision struct {
-	Data      interface{}
+type PersonRevision = Revision[map[string]PersonRevisionDataItem]
+type SubjectRevision = Revision[*SubjectRevisionData]
+type CharacterRevision = Revision[map[string]CharacterRevisionEditItem]
+
+type Revision[T any] struct {
+	Data      T
 	CreatedAt time.Time
 	Summary   string
 	Type      uint8
@@ -67,22 +71,6 @@ type SubjectRevisionData struct {
 	SubjectID    uint32
 	FieldEps     uint32
 	Type         uint8
-}
-
-// RevisionCommon common parts in revision.
-// TODO: rename RevisionCommon to Revision and replace the latter.
-type RevisionCommon struct {
-	CreatedAt time.Time
-	Summary   string
-	ID        uint32
-	CreatorID uint32
-	Type      uint8
-}
-
-// CharacterRevision concrete revision data type.
-type CharacterRevision struct {
-	Data CharacterRevisionData
-	RevisionCommon
 }
 
 type CharacterRevisionData struct {

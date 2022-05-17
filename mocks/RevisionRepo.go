@@ -161,14 +161,14 @@ func (_c *RevisionRepo_CountSubjectRelated_Call) Return(_a0 int64, _a1 error) *R
 }
 
 // GetCharacterRelated provides a mock function with given fields: ctx, id
-func (_m *RevisionRepo) GetCharacterRelated(ctx context.Context, id uint32) (model.CharacterRevision, error) {
+func (_m *RevisionRepo) GetCharacterRelated(ctx context.Context, id uint32) (model.Revision, error) {
 	ret := _m.Called(ctx, id)
 
-	var r0 model.CharacterRevision
-	if rf, ok := ret.Get(0).(func(context.Context, uint32) model.CharacterRevision); ok {
+	var r0 model.Revision
+	if rf, ok := ret.Get(0).(func(context.Context, uint32) model.Revision); ok {
 		r0 = rf(ctx, id)
 	} else {
-		r0 = ret.Get(0).(model.CharacterRevision)
+		r0 = ret.Get(0).(model.Revision)
 	}
 
 	var r1 error
@@ -200,7 +200,7 @@ func (_c *RevisionRepo_GetCharacterRelated_Call) Run(run func(ctx context.Contex
 	return _c
 }
 
-func (_c *RevisionRepo_GetCharacterRelated_Call) Return(_a0 model.CharacterRevision, _a1 error) *RevisionRepo_GetCharacterRelated_Call {
+func (_c *RevisionRepo_GetCharacterRelated_Call) Return(_a0 model.Revision, _a1 error) *RevisionRepo_GetCharacterRelated_Call {
 	_c.Call.Return(_a0, _a1)
 	return _c
 }
@@ -296,15 +296,15 @@ func (_c *RevisionRepo_GetSubjectRelated_Call) Return(_a0 model.Revision, _a1 er
 }
 
 // ListCharacterRelated provides a mock function with given fields: ctx, characterID, limit, offset
-func (_m *RevisionRepo) ListCharacterRelated(ctx context.Context, characterID uint32, limit int, offset int) ([]model.CharacterRevision, error) {
+func (_m *RevisionRepo) ListCharacterRelated(ctx context.Context, characterID uint32, limit int, offset int) ([]model.Revision, error) {
 	ret := _m.Called(ctx, characterID, limit, offset)
 
-	var r0 []model.CharacterRevision
-	if rf, ok := ret.Get(0).(func(context.Context, uint32, int, int) []model.CharacterRevision); ok {
+	var r0 []model.Revision
+	if rf, ok := ret.Get(0).(func(context.Context, uint32, int, int) []model.Revision); ok {
 		r0 = rf(ctx, characterID, limit, offset)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).([]model.CharacterRevision)
+			r0 = ret.Get(0).([]model.Revision)
 		}
 	}
 
@@ -339,7 +339,7 @@ func (_c *RevisionRepo_ListCharacterRelated_Call) Run(run func(ctx context.Conte
 	return _c
 }
 
-func (_c *RevisionRepo_ListCharacterRelated_Call) Return(_a0 []model.CharacterRevision, _a1 error) *RevisionRepo_ListCharacterRelated_Call {
+func (_c *RevisionRepo_ListCharacterRelated_Call) Return(_a0 []model.Revision, _a1 error) *RevisionRepo_ListCharacterRelated_Call {
 	_c.Call.Return(_a0, _a1)
 	return _c
 }
